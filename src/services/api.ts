@@ -1,65 +1,73 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-const API_VERSION = 'v1';
-
-const buildUrl = (path: string) => `${API_URL}/${API_VERSION}${path}`;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 export const api = {
+  // Películas
   getMovies: async () => {
-    const response = await fetch(buildUrl('/movies'));
+    const response = await fetch(`${API_URL}/movies`);
+    if (!response.ok) throw new Error('Failed to fetch movies');
     return response.json();
   },
-
-  getTrendingMovies: async (limit = 10) => {
-    const response = await fetch(buildUrl(`/movies?trending=true&limit=${limit}`));
-    return response.json();
-  },
-
-  getNewReleases: async (limit = 10) => {
-    const response = await fetch(buildUrl(`/movies?new=true&limit=${limit}`));
-    return response.json();
-  },
-
+  
   getMovieById: async (id: string) => {
-    const response = await fetch(buildUrl(`/movies/${id}`));
+    const response = await fetch(`${API_URL}/movies/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch movie');
     return response.json();
   },
 
+  // Series
   getSeries: async () => {
-    const response = await fetch(buildUrl('/series'));
+    const response = await fetch(`${API_URL}/series`);
+    if (!response.ok) throw new Error('Failed to fetch series');
     return response.json();
   },
 
   getSeriesById: async (id: string) => {
-    const response = await fetch(buildUrl(`/series/${id}`));
+    const response = await fetch(`${API_URL}/series/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch series');
     return response.json();
   },
 
+  // Vidlink Players
   getMoviePlayer: async (movieId: string) => {
-    const response = await fetch(buildUrl(`/vidlink/movie/${movieId}`));
+    const response = await fetch(`${API_URL}/vidlink/movie/${movieId}`);
+    if (!response.ok) throw new Error('Failed to get movie player');
     return response.json();
   },
 
   getTvPlayer: async (seriesId: string, season: number, episode: number) => {
     const response = await fetch(
-      buildUrl(`/vidlink/tv/${seriesId}?season=${season}&episode=${episode}`)
+      `${API_URL}/vidlink/tv/${seriesId}?season=${season}&episode=${episode}`
     );
+    if (!response.ok) throw new Error('Failed to get TV player');
     return response.json();
   },
 
   getAnimePlayer: async (animeId: string, number: number, type: string = 'sub') => {
     const response = await fetch(
-      buildUrl(`/vidlink/anime/${animeId}?number=${number}&type=${type}`)
+      `${API_URL}/vidlink/anime/${animeId}?number=${number}&type=${type}`
     );
+    if (!response.ok) throw new Error('Failed to get anime player');
     return response.json();
   },
 
+  // Búsqueda
   search: async (query: string) => {
-    const response = await fetch(buildUrl(`/search?query=${query}`));
+    const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Failed to search');
     return response.json();
   },
 
+  // Géneros
   getGenres: async () => {
-    const response = await fetch(buildUrl('/genres'));
+    const response = await fetch(`${API_URL}/genres`);
+    if (!response.ok) throw new Error('Failed to fetch genres');
     return response.json();
-  }
+  },
+
+  // Home
+  getHome: async () => {
+    const response = await fetch(`${API_URL}/home`);
+    if (!response.ok) throw new Error('Failed to fetch home');
+    return response.json();
+  },
 };
