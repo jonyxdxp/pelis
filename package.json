@@ -6,23 +6,14 @@
 
     "workspaces": [
     "app",
-    "api"
+    "app/api"
   ],
 
   "scripts": {
-    "dev:frontend": "vite",
-    "build:frontend": "tsc -b && vite build",
-    "lint:frontend": "eslint .",
-    "preview:frontend": "vite preview",
-
-        "start:backend": "node src/server.js",
-    "dev:backend": "nodemon src/server.js",
-    "db:migrate": "npx prisma migrate dev",
-    "db:generate": "npx prisma generate",
-    "db:seed": "node src/seeds/index.js",
-    "db:reset": "npx prisma migrate reset --force && npm run db:seed",
-    "prisma:studio": "npx prisma studio",
-    "test:backend": "jest"
+    "dev:frontend": "cd app && npm run dev",
+    "dev:backend": "cd app/api && npm run dev",
+    "build:backend": "cd app/api && npm install && npx prisma migrate deploy",
+    "start:backend": "cd app/api && npm start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -58,7 +49,6 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
-    "hls.js": "^1.6.15",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",
     "next-themes": "^0.4.6",
