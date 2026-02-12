@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Movie {
+  id                String    @id @default(uuid())
+  title             String
+  slug              String    @unique
+  description       String    @db.Text
+  shortDescription  String?   @db.VarChar(500)
+  genres            String[]  @default([])
+  releaseYear       Int
+  director          String
+  writers           String[]  @default([])
+  cast              Json      @default("[]")
+  country           String
+  language          String
+  duration          Int
+  rating            Float     @default(0)
+  ratingCount       Int       @default(0)
+  posterUrl         String    @db.VarChar(500)
+  posterBlurhash    String?   @db.VarChar(100)
+  backdropUrl       String    @db.VarChar(500)
+  backdropBlurhash  String?   @db.VarChar(100)
+  videoUrl          String    @db.VarChar(500)
+  videoType         String    @default("hls")
+  featured          Boolean   @default(false)
+  featuredOrder     Int?
+  plotKeywords      String[]  @default([])
+  ageRating         String    @default("PG-13")
+  productionCompany String?
+  budget            BigInt?
+  revenue           BigInt?
+  imdbId            String?
+  tmdbId            Int?       @unique  // ← PARA VIDLINK
+  viewsCount        Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([featured])
+  @@index([genres])
+  @@index([releaseYear])
+  @@index([rating])
+  @@index([slug])
+  @@map("movies")
+}
+
+model Series {
+  id                String    @id @default(uuid())
+  title             String
+  slug              String    @unique
+  description       String    @db.Text
+  shortDescription  String?   @db.VarChar(500)
+  genres            String[]  @default([])
+  creator           String
+  cast              Json      @default("[]")
+  country           String
+  language          String
+  rating            Float     @default(0)
+  ratingCount       Int       @default(0)
+  posterUrl         String    @db.VarChar(500)
+  posterBlurhash    String?   @db.VarChar(100)
+  backdropUrl       String    @db.VarChar(500)
+  backdropBlurhash  String?   @db.VarChar(100)
+  featured          Boolean   @default(false)
+  featuredOrder     Int?
+  totalSeasons      Int
+  totalEpisodes     Int
+  plotKeywords      String[]  @default([])
+  ageRating         String    @default("PG-13")
+  productionCompany String?
+  firstAirDate      DateTime
+  lastAirDate       DateTime?
+  status            String    @default("returning")
+  tmdbId            Int?       @unique  // ← PARA VIDLINK
+  viewsCount        Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  seasons  Season[]
+
+  @@index([featured])
+  @@index([genres])
+  @@index([rating])
+  @@index([slug])
+  @@map("series")
+}
+
+model Season {
+  id             String    @id @default(uuid())
+  seriesId       String
+  seasonNumber   Int
+  title          String?
+  description    String?   @db.Text
+  posterUrl      String?   @db.VarChar(500)
+  posterBlurhash String?   @db.VarChar(100)
+  airDate        DateTime?
+  episodeCount   Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  series   Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  episodes Episode[]
+
+  @@unique([seriesId, seasonNumber])
+  @@index([seriesId])
+  @@map("seasons")
+}
+
+model Episode {
+  id                String    @id @default(uuid())
+  seriesId          String
+  seasonId          String
+  seasonNumber      Int
+  episodeNumber     Int
+  title             String
+  slug              String    @unique
+  description       String?   @db.Text
+  thumbnailUrl      String?   @db.VarChar(500)
+  thumbnailBlurhash String?   @db.VarChar(100)
+  duration          Int
+  airDate           DateTime?
+  rating            Float?
+  viewsCount        Int       @default(0)
+  videoUrl          String    @db.VarChar(500)
+  videoType         String    @default("hls")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seriesId, seasonNumber, episodeNumber])
+  @@index([seriesId, seasonNumber, episodeNumber])
+  @@index([seasonId])
+  @@map("episodes")
+}
+
+model Genre {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  iconUrl     String?  @db.VarChar(500)
+  color       String?  @db.VarChar(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@map("genres")
+}
+
+model FeaturedCarousel {
+  id            String   @id @default(uuid())
+  title         String
+  slug          String   @unique
+  type          String   @default("custom")
+  genreId       String?
+  sortBy        String   @default("relevance")
+  sortOrder     String   @default("desc")
+  limit         Int      @default(20)
+  position      Int
+  visibleMobile Boolean  @default(true)
+  visibleTv     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  content FeaturedContent[]
+
+  @@index([slug])
+  @@index([position])
+  @@map("featured_carousels")
+}
+
+model FeaturedContent {
+  id            String   @id @default(uuid())
+  carouselId    String?
+  contentId     String
+  contentType   String
+  title         String?
+  description   String?  @db.VarChar(1000)
+  imageUrl      String   @db.VarChar(500)
+  imageBlurhash String?  @db.VarChar(100)
+  position      Int
+  ctaText       String?  @db.VarChar(50)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  carousel FeaturedCarousel? @relation(fields: [carouselId], references: [id], onDelete: SetNull)
+
+  @@index([carouselId, position])
+  @@index([contentType, contentId])
+  @@map("featured_content")
+}
+
+model SearchKeyword {
+  id          String   @id @default(uuid())
+  contentId   String
+  contentType String
+  keyword     String
+  weight      Float    @default(1.0)
+  createdAt   DateTime @default(now())
+
+  @@index([keyword])
+  @@index([contentType, contentId])
+  @@map("search_keywords")
+}
+
+model ViewAnalytics {
+  id          String   @id @default(uuid())
+  contentId   String
+  contentType String
+  deviceType  String   @default("web")
+  deviceName  String?
+  ipAddress   String?
+  viewedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([contentId, viewedAt])
+  @@index([deviceType])
+  @@map("view_analytics")
+}
+
+model Recommendation {
+  id              String   @id @default(uuid())
+  fromContentId   String
+  fromContentType String
+  toContentId     String
+  toContentType   String
+  reason          String
+  score           Float    @default(0.5)
+  createdAt       DateTime @default(now())
+
+  @@index([fromContentId])
+  @@map("recommendations")
+}
