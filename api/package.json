@@ -1,5 +1,5 @@
 {
-  "name": "streaming-backend",
+  "name": "api",
   "version": "1.0.0",
   "description": "Backend API para plataforma de streaming tipo Netflix",
   "main": "src/server.js",
