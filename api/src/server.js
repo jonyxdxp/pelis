@@ -17,7 +17,7 @@ const genreRoutes = require('./routes/genres');
 const homeRoutes = require('./routes/home');
 const recommendationRoutes = require('./routes/recommendations');
 const analyticsRoutes = require('./routes/analytics');
-const vidlinkRoutes = require('./routes/vidlink'); // ← NUEVO
+const vidlinkRoutes = require('./routes/vidlink');
 
 // Create Express app
 const app = express();
@@ -27,11 +27,28 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// CORS
-app.use(cors({
-  origin: env.CORS_ORIGIN.split(','),
+// CORS - ← CONFIGURAR PRIMERO
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'https://pelis-flax-two.vercel.app', // Tu frontend en Vercel
+      'http://localhost:5173', // Local development
+      'http://localhost:3000',
+    ];
+    
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 3600,
+};
+
+app.use(cors(corsOptions));
 
 // Compression
 app.use(compression());
@@ -61,9 +78,6 @@ app.get('/health', (req, res) => {
 // API rate limiting
 app.use('/api', apiLimiter);
 
-
-
-// API Routes
 // API Routes
 const apiVersion = env.API_VERSION;
 app.use(`/api/${apiVersion}/movies`, movieRoutes);
@@ -73,11 +87,7 @@ app.use(`/api/${apiVersion}/genres`, genreRoutes);
 app.use(`/api/${apiVersion}/home`, homeRoutes);
 app.use(`/api/${apiVersion}`, recommendationRoutes);
 app.use(`/api/${apiVersion}/analytics`, analyticsRoutes);
-app.use(`/api/${apiVersion}/vidlink`, vidlinkRoutes); // ← CONSISTENTE
-
-
-
-
+app.use(`/api/${apiVersion}/vidlink`, vidlinkRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -93,6 +103,7 @@ app.get('/', (req, res) => {
       home: `/api/${apiVersion}/home`,
       trending: `/api/${apiVersion}/trending`,
       analytics: `/api/${apiVersion}/analytics`,
+      vidlink: `/api/${apiVersion}/vidlink`,
     },
   });
 });
@@ -106,14 +117,12 @@ app.use(errorHandler);
 // Start server
 async function startServer() {
   try {
-    // Test database connection
     const connected = await testConnection();
     if (!connected) {
       logger.error('Failed to connect to database. Exiting...');
       process.exit(1);
     }
 
-    // Start listening
     app.listen(env.PORT, env.HOST, () => {
       logger.info(`🚀 Server running on http://${env.HOST}:${env.PORT}`);
       logger.info(`📚 API documentation available at http://${env.HOST}:${env.PORT}/api/${apiVersion}`);
@@ -138,7 +147,6 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Handle uncaught errors
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
   process.exit(1);
@@ -149,7 +157,6 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-// Start the server
 startServer();
 
 module.exports = app;
