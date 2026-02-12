@@ -1,209 +1,278 @@
-import { genres, movies, seriesData, episodes, type Movie, type Series, type Episode, type Genre } from '@/data/database';
+// API Configuration
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_VERSION = 'v1';
+const API_URL = `${API_BASE}/${API_VERSION}`;
 
-// Helper functions
-const getGenreNames = (genreIds: number[]): string[] => {
-  return genreIds.map(id => genres.find(g => g.id === id)?.name).filter((name): name is string => !!name);
-};
+// Helper: Fetch wrapper con manejo de errores
+async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  try {
+    const url = `${API_URL}${endpoint}`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
 
-const enrichContent = <T extends { genre_ids: number[] }>(item: T): T & { genres: string[] } => ({
-  ...item,
-  genres: getGenreNames(item.genre_ids)
-});
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Fetch error on ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+// Types
+export interface Genre {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string;
+}
+
+export interface Movie {
+  id: string;
+  title: string;
+  description: string;
+  posterUrl: string;
+  backdropUrl: string;
+  rating: number;
+  releaseYear: number;
+  duration: number;
+  genres: string[];
+  tmdbId?: number;
+  featured?: boolean;
+}
+
+export interface Series {
+  id: string;
+  title: string;
+  description: string;
+  posterUrl: string;
+  backdropUrl: string;
+  rating: number;
+  totalSeasons: number;
+  totalEpisodes: number;
+  genres: string[];
+  tmdbId?: number;
+  featured?: boolean;
+}
+
+export interface Episode {
+  id: string;
+  title: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  duration: number;
+  description?: string;
+}
+
+export interface VidlinkResponse {
+  success: boolean;
+  embedUrl: string;
+  movieTitle?: string;
+  seriesTitle?: string;
+  error?: string;
+}
 
 // API Service
 export const api = {
-  // Genres
-  getGenres: (): Genre[] => genres,
-
-  // Movies
-  getMovies: (): (Movie & { genres: string[] })[] => movies.map(enrichContent),
-  
-  getMovieById: (id: number): (Movie & { genres: string[] }) | undefined => {
-    const movie = movies.find(m => m.id === id);
-    return movie ? enrichContent(movie) : undefined;
+  // ==================== GENRES ====================
+  getGenres: async (): Promise<Genre[]> => {
+    return fetchAPI<Genre[]>('/genres');
   },
 
-  getMoviesByGenre: (genreName: string): (Movie & { genres: string[] })[] => {
-    const genre = genres.find(g => g.name.toLowerCase() === genreName.toLowerCase());
-    if (!genre) return [];
-    return movies.filter(m => m.genre_ids.includes(genre.id)).map(enrichContent);
+  // ==================== MOVIES ====================
+  getMovies: async (limit?: number, offset?: number): Promise<Movie[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (offset) params.append('offset', offset.toString());
+    
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchAPI<Movie[]>(`/movies${query}`);
   },
 
-  getTrendingMovies: (): (Movie & { genres: string[] })[] => {
-    return movies
-      .filter(m => m.rating >= 8.0)
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 10)
-      .map(enrichContent);
+  getMovieById: async (id: string): Promise<Movie> => {
+    return fetchAPI<Movie>(`/movies/${id}`);
   },
 
-  getNewReleases: (): (Movie & { genres: string[] })[] => {
-    return movies
-      .sort((a, b) => b.release_year - a.release_year)
-      .slice(0, 10)
-      .map(enrichContent);
+  getMoviesByGenre: async (genreName: string): Promise<Movie[]> => {
+    return fetchAPI<Movie[]>(`/movies?genre=${encodeURIComponent(genreName)}`);
   },
 
-  getFeaturedMovies: (): (Movie & { genres: string[] })[] => {
-    return movies.filter(m => m.featured).map(enrichContent);
+  getTrendingMovies: async (limit: number = 10): Promise<Movie[]> => {
+    return fetchAPI<Movie[]>(`/movies?trending=true&limit=${limit}`);
   },
 
-  searchMovies: (query: string): (Movie & { genres: string[] })[] => {
-    if (!query) return [];
-    const filtered = movies.filter(m => 
-      m.title.toLowerCase().includes(query.toLowerCase()) ||
-      m.description.toLowerCase().includes(query.toLowerCase())
+  getNewReleases: async (limit: number = 10): Promise<Movie[]> => {
+    return fetchAPI<Movie[]>(`/movies?new=true&limit=${limit}`);
+  },
+
+  getFeaturedMovies: async (): Promise<Movie[]> => {
+    return fetchAPI<Movie[]>('/movies?featured=true');
+  },
+
+  searchMovies: async (query: string): Promise<Movie[]> => {
+    if (!query.trim()) return [];
+    return fetchAPI<Movie[]>(`/search?query=${encodeURIComponent(query)}&type=movie`);
+  },
+
+  // ==================== SERIES ====================
+  getSeries: async (limit?: number, offset?: number): Promise<Series[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (offset) params.append('offset', offset.toString());
+    
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchAPI<Series[]>(`/series${query}`);
+  },
+
+  getSeriesById: async (id: string): Promise<Series> => {
+    return fetchAPI<Series>(`/series/${id}`);
+  },
+
+  getSeriesByGenre: async (genreName: string): Promise<Series[]> => {
+    return fetchAPI<Series[]>(`/series?genre=${encodeURIComponent(genreName)}`);
+  },
+
+  getTrendingSeries: async (limit: number = 10): Promise<Series[]> => {
+    return fetchAPI<Series[]>(`/series?trending=true&limit=${limit}`);
+  },
+
+  getFeaturedSeries: async (): Promise<Series[]> => {
+    return fetchAPI<Series[]>('/series?featured=true');
+  },
+
+  searchSeries: async (query: string): Promise<Series[]> => {
+    if (!query.trim()) return [];
+    return fetchAPI<Series[]>(`/search?query=${encodeURIComponent(query)}&type=series`);
+  },
+
+  // ==================== EPISODES ====================
+  getEpisodes: async (seriesId: string, seasonNumber: number): Promise<Episode[]> => {
+    return fetchAPI<Episode[]>(`/series/${seriesId}/episodes?season=${seasonNumber}`);
+  },
+
+  getAllSeasons: async (seriesId: string): Promise<number[]> => {
+    return fetchAPI<number[]>(`/series/${seriesId}/seasons`);
+  },
+
+  // ==================== VIDLINK PLAYERS ====================
+  getMoviePlayer: async (movieId: string): Promise<VidlinkResponse> => {
+    return fetchAPI<VidlinkResponse>(`/vidlink/movie/${movieId}`);
+  },
+
+  getTvPlayer: async (
+    seriesId: string,
+    season: number,
+    episode: number
+  ): Promise<VidlinkResponse> => {
+    return fetchAPI<VidlinkResponse>(
+      `/vidlink/tv/${seriesId}?season=${season}&episode=${episode}`
     );
-    return filtered.map(enrichContent);
   },
 
-  // Series
-  getSeries: (): (Series & { genres: string[] })[] => seriesData.map(enrichContent),
-  
-  getSeriesById: (id: number): (Series & { genres: string[] }) | undefined => {
-    const s = seriesData.find(s => s.id === id);
-    return s ? enrichContent(s) : undefined;
-  },
-
-  getSeriesByGenre: (genreName: string): (Series & { genres: string[] })[] => {
-    const genre = genres.find(g => g.name.toLowerCase() === genreName.toLowerCase());
-    if (!genre) return [];
-    return seriesData.filter(s => s.genre_ids.includes(genre.id)).map(enrichContent);
-  },
-
-  getTrendingSeries: (): (Series & { genres: string[] })[] => {
-    return seriesData
-      .filter(s => s.rating >= 8.5)
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 10)
-      .map(enrichContent);
-  },
-
-  getFeaturedSeries: (): (Series & { genres: string[] })[] => {
-    return seriesData.filter(s => s.featured).map(enrichContent);
-  },
-
-  searchSeries: (query: string): (Series & { genres: string[] })[] => {
-    if (!query) return [];
-    const filtered = seriesData.filter(s => 
-      s.title.toLowerCase().includes(query.toLowerCase()) ||
-      s.description.toLowerCase().includes(query.toLowerCase())
+  getAnimePlayer: async (
+    animeId: string,
+    number: number,
+    type: string = 'sub'
+  ): Promise<VidlinkResponse> => {
+    return fetchAPI<VidlinkResponse>(
+      `/vidlink/anime/${animeId}?number=${number}&type=${type}`
     );
-    return filtered.map(enrichContent);
   },
 
-  // Episodes
-  getEpisodes: (seriesId: number, seasonNumber: number): Episode[] => {
-    return episodes.filter(e => e.series_id === seriesId && e.season_number === seasonNumber);
+  // ==================== FEATURED CONTENT ====================
+  getFeaturedContent: async (): Promise<(Movie | Series)[]> => {
+    return fetchAPI<(Movie | Series)[]>('/home');
   },
 
-  getAllSeasons: (seriesId: number): number[] => {
-    const seriesEpisodes = episodes.filter(e => e.series_id === seriesId);
-    const seasons = [...new Set(seriesEpisodes.map(e => e.season_number))];
-    return seasons.sort((a, b) => a - b);
-  },
-
-  // Featured Content (movies + series)
-  getFeaturedContent: (): ((Movie | Series) & { genres: string[] })[] => {
-    const featuredMovies = movies.filter(m => m.featured).map(enrichContent);
-    const featuredSeries = seriesData.filter(s => s.featured).map(enrichContent);
-    return [...featuredMovies, ...featuredSeries];
-  },
-
-  // Advanced Search
-  search: (params: {
+  // ==================== ADVANCED SEARCH ====================
+  search: async (params: {
     query?: string;
     genre?: string;
     year?: number;
     type?: 'movie' | 'series';
     minRating?: number;
     sortBy?: 'rating' | 'newest' | 'oldest';
-  }): ((Movie | Series) & { genres: string[] })[] => {
-    const { query, genre, year, type, minRating, sortBy } = params;
+  }): Promise<(Movie | Series)[]> => {
+    const queryParams = new URLSearchParams();
     
-    let results: ((Movie | Series) & { genres: string[] })[] = [];
+    if (params.query) queryParams.append('query', params.query);
+    if (params.genre) queryParams.append('genre', params.genre);
+    if (params.year) queryParams.append('year', params.year.toString());
+    if (params.type) queryParams.append('type', params.type);
+    if (params.minRating) queryParams.append('minRating', params.minRating.toString());
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     
-    if (type === 'movie' || !type) {
-      results = [...results, ...movies.map(m => enrichContent(m))];
-    }
-    if (type === 'series' || !type) {
-      results = [...results, ...seriesData.map(s => enrichContent(s))];
-    }
-    
-    // Apply filters
-    if (query) {
-      results = results.filter(item => 
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        item.description.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-    
-    if (genre) {
-      const genreObj = genres.find(g => g.name.toLowerCase() === genre.toLowerCase());
-      if (genreObj) {
-        results = results.filter(item => item.genre_ids.includes(genreObj.id));
-      }
-    }
-    
-    if (year) {
-      results = results.filter(item => item.release_year === year);
-    }
-    
-    if (minRating) {
-      results = results.filter(item => item.rating >= minRating);
-    }
-    
-    // Apply sorting
-    if (sortBy) {
-      switch (sortBy) {
-        case 'rating':
-          results.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'newest':
-          results.sort((a, b) => b.release_year - a.release_year);
-          break;
-        case 'oldest':
-          results.sort((a, b) => a.release_year - b.release_year);
-          break;
-      }
-    }
-    
-    return results;
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return fetchAPI<(Movie | Series)[]>(`/search${query}`);
   },
 
-  // Get similar content
-  getSimilarContent: (type: 'movie' | 'series', id: number, limit: number = 6): ((Movie | Series) & { genres: string[] })[] => {
-    let currentItem: (Movie | Series) | undefined;
-    let pool: (Movie | Series)[] = [];
-    
-    if (type === 'movie') {
-      currentItem = movies.find(m => m.id === id);
-      pool = movies.filter(m => m.id !== id);
-    } else {
-      currentItem = seriesData.find(s => s.id === id);
-      pool = seriesData.filter(s => s.id !== id);
-    }
-    
-    if (!currentItem) return [];
-    
-    // Find items with similar genres
-    const similar = pool
-      .filter(item => item.genre_ids.some(gid => currentItem!.genre_ids.includes(gid)))
-      .slice(0, limit);
-    
-    return similar.map(enrichContent);
+  // ==================== SIMILAR CONTENT ====================
+  getSimilarContent: async (
+    type: 'movie' | 'series',
+    id: string,
+    limit: number = 6
+  ): Promise<(Movie | Series)[]> => {
+    return fetchAPI<(Movie | Series)[]>(
+      `/${type === 'movie' ? 'movies' : 'series'}/${id}/similar?limit=${limit}`
+    );
   },
 
-  // Get content by ID (generic)
-  getContentById: (type: 'movie' | 'series', id: number): ((Movie | Series) & { genres: string[] }) | undefined => {
-    if (type === 'movie') {
-      const movie = movies.find(m => m.id === id);
-      return movie ? enrichContent(movie) : undefined;
-    } else {
-      const s = seriesData.find(s => s.id === id);
-      return s ? enrichContent(s) : undefined;
+  // ==================== RECOMMENDATIONS ====================
+  getRecommendations: async (
+    contentId: string,
+    contentType: 'movie' | 'series'
+  ): Promise<(Movie | Series)[]> => {
+    return fetchAPI<(Movie | Series)[]>(
+      `/recommendations?contentId=${contentId}&contentType=${contentType}`
+    );
+  },
+
+  // ==================== ANALYTICS ====================
+  trackView: async (
+    contentId: string,
+    contentType: 'movie' | 'series',
+    deviceType: string = 'web'
+  ): Promise<{ success: boolean }> => {
+    return fetchAPI<{ success: boolean }>('/analytics/views', {
+      method: 'POST',
+      body: JSON.stringify({ contentId, contentType, deviceType }),
+    });
+  },
+
+  // ==================== UTILITY ====================
+  getContentById: async (
+    type: 'movie' | 'series',
+    id: string
+  ): Promise<Movie | Series | undefined> => {
+    try {
+      if (type === 'movie') {
+        return await api.getMovieById(id);
+      } else {
+        return await api.getSeriesById(id);
+      }
+    } catch (error) {
+      console.error(`Error fetching ${type} ${id}:`, error);
+      return undefined;
     }
-  }
+  },
+
+  // Health check
+  healthCheck: async (): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE.replace('/api', '')}/health`);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  },
 };
 
 export default api;

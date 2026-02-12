@@ -1,0 +1,239 @@
+.player-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 20px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Estado de carga */
+.player-container.loading {
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  text-align: center;
+  color: #fff;
+}
+
+.spinner-circle {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner p {
+  margin: 15px 0 0 0;
+  font-size: 16px;
+}
+
+/* Estado de error */
+.player-container.error {
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 2px solid #ff6b6b;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  color: #fff;
+  max-width: 500px;
+}
+
+.error-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.error-message h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+}
+
+.error-message p {
+  margin: 10px 0 20px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.error-message button {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.error-message button:hover {
+  background: #ff5252;
+}
+
+/* Estructura del reproductor */
+.player-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.player-iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Controles superiores */
+.player-controls-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.player-wrapper:hover .player-controls-top {
+  opacity: 1;
+}
+
+.controls-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.controls-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Botones de control */
+.control-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+}
+
+/* Noticia de anuncios */
+.ads-notice {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 5;
+}
+
+.player-wrapper:hover .ads-notice {
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .player-container {
+    margin: 10px auto;
+    border-radius: 8px;
+  }
+
+  .player-controls-top {
+    height: 40px;
+    padding: 0 15px;
+  }
+
+  .player-title {
+    font-size: 12px;
+  }
+
+  .control-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+
+  .ads-notice {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-controls-top {
+    height: 35px;
+  }
+
+  .player-title {
+    display: none;
+  }
+
+  .control-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+/* Fullscreen */
+.player-container:fullscreen {
+  max-width: 100%;
+  border-radius: 0;
+}
