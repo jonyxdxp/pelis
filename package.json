@@ -3,11 +3,26 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+
+    "workspaces": [
+    "app",
+    "api"
+  ],
+
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev:frontend": "vite",
+    "build:frontend": "tsc -b && vite build",
+    "lint:frontend": "eslint .",
+    "preview:frontend": "vite preview",
+
+        "start:backend": "node src/server.js",
+    "dev:backend": "nodemon src/server.js",
+    "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma generate",
+    "db:seed": "node src/seeds/index.js",
+    "db:reset": "npx prisma migrate reset --force && npm run db:seed",
+    "prisma:studio": "npx prisma studio",
+    "test:backend": "jest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
