@@ -10,12 +10,18 @@ interface MovieCardProps {
 
 export function MovieCard({ content, variant = 'default' }: MovieCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const isMovie = content.type === 'movie';
-  const duration = isMovie 
-    ? `${(content as Movie).duration} min` 
-    : `${(content as Series).total_seasons} temp.`;
+  
+  // Determinar si es película o serie (Movie tiene 'duration', Series tiene 'totalSeasons')
+  const isMovie = 'duration' in content;
+  const contentType = isMovie ? 'movie' : 'series';
+  const duration = isMovie
+    ? `${(content as Movie).duration} min`
+    : `${(content as Series).totalSeasons} temp.`;
 
   const isLarge = variant === 'large';
+  
+  // Validar que el contenido tenga datos necesarios
+  if (!content || !content.id) return null;
 
   return (
     <div
@@ -23,17 +29,19 @@ export function MovieCard({ content, variant = 'default' }: MovieCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/${content.type}/${content.id}`}>
+      <Link to={`/${contentType}/${content.id}`}>
         <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 group">
           {/* Poster Image */}
-          <img
-            src={content.poster_url}
-            alt={content.title}
-            className={`w-full h-full object-cover transition-transform duration-300 ${
-              isHovered ? 'scale-110' : 'scale-100'
-            }`}
-            loading="lazy"
-          />
+          {content.posterUrl && (
+            <img
+              src={content.posterUrl}
+              alt={content.title || 'Unknown'}
+              className={`w-full h-full object-cover transition-transform duration-300 ${
+                isHovered ? 'scale-110' : 'scale-100'
+              }`}
+              loading="lazy"
+            />
+          )}
 
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -43,7 +51,7 @@ export function MovieCard({ content, variant = 'default' }: MovieCardProps) {
             {/* Quick Actions */}
             <div className="flex items-center gap-2 mb-2">
               <Link
-                to={`/watch/${content.type}/${content.id}`}
+                to={`/watch/${contentType}/${content.id}`}
                 className="w-8 h-8 flex items-center justify-center bg-white rounded-full hover:bg-white/90 transition-colors"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
@@ -72,17 +80,23 @@ export function MovieCard({ content, variant = 'default' }: MovieCardProps) {
             {/* Info */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-green-400 font-semibold">{content.rating.toFixed(1)}</span>
-                <span className="text-gray-300">{content.release_year}</span>
+                {content.rating && (
+                  <span className="text-green-400 font-semibold">{(content.rating).toFixed(1)}</span>
+                )}
+                {content.releaseYear && (
+                  <span className="text-gray-300">{content.releaseYear}</span>
+                )}
                 <span className="text-gray-300">{duration}</span>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {content.genres.slice(0, 2).map((genre) => (
-                  <span key={genre} className="text-[10px] text-gray-400">
-                    {genre}
-                  </span>
-                ))}
-              </div>
+              {content.genres && content.genres.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {content.genres.slice(0, 2).map((genre) => (
+                    <span key={genre} className="text-[10px] text-gray-400">
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -96,9 +110,9 @@ export function MovieCard({ content, variant = 'default' }: MovieCardProps) {
       </Link>
 
       {/* Title */}
-      <Link to={`/${content.type}/${content.id}`}>
+      <Link to={`/${contentType}/${content.id}`}>
         <h3 className={`mt-2 text-sm font-medium text-gray-200 hover:text-white transition-colors line-clamp-1 ${isLarge ? 'md:text-base' : ''}`}>
-          {content.title}
+          {content.title || 'Unknown'}
         </h3>
       </Link>
     </div>
