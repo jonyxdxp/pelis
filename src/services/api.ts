@@ -8,7 +8,6 @@ export const api = {
     const response = await fetch(`${API_URL}/movies`);
     if (!response.ok) throw new Error('Failed to fetch movies');
     const data = await response.json();
-    // Estructura: { data: { movies: [...], pagination: {...} } }
     return data.data?.movies || [];
   },
 
@@ -48,6 +47,56 @@ export const api = {
     return data.data || data;
   },
 
+  // Home
+  getHome: async () => {
+    const response = await fetch(`${API_URL}/home`);
+    if (!response.ok) throw new Error('Failed to fetch home');
+    const data = await response.json();
+    return data.data || data;
+  },
+
+  // Featured Content
+  getFeaturedContent: async () => {
+    const response = await fetch(`${API_URL}/home`);
+    if (!response.ok) throw new Error('Failed to fetch featured content');
+    const data = await response.json();
+    return data.data?.featuredContent || [];
+  },
+
+  // Géneros
+  getGenres: async () => {
+    const response = await fetch(`${API_URL}/genres`);
+    if (!response.ok) throw new Error('Failed to fetch genres');
+    const data = await response.json();
+    return data.data?.genres || data.data || [];
+  },
+
+  // Búsqueda
+  search: async (query: string) => {
+    const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Failed to search');
+    const data = await response.json();
+    return data.data?.movies || data.data?.series || [];
+  },
+
+  // Recomendaciones
+  getRecommendations: async (contentId: string, contentType: string = 'movie') => {
+    const response = await fetch(`${API_URL}/recommendations/${contentId}?type=${contentType}`);
+    if (!response.ok) throw new Error('Failed to fetch recommendations');
+    const data = await response.json();
+    return data.data || [];
+  },
+
+  // Analytics
+  trackView: async (contentId: string, contentType: string) => {
+    const response = await fetch(`${API_URL}/analytics/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentId, contentType }),
+    });
+    return response.json();
+  },
+
   // Vidlink Players
   getMoviePlayer: async (movieId: string) => {
     const response = await fetch(`${API_URL}/vidlink/movie/${movieId}`);
@@ -68,29 +117,6 @@ export const api = {
       `${API_URL}/vidlink/anime/${animeId}?number=${number}&type=${type}`
     );
     if (!response.ok) throw new Error('Failed to get anime player');
-    return response.json();
-  },
-
-  // Búsqueda
-  search: async (query: string) => {
-    const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`);
-    if (!response.ok) throw new Error('Failed to search');
-    const data = await response.json();
-    return data.data?.movies || data.data?.series || [];
-  },
-
-  // Géneros
-  getGenres: async () => {
-    const response = await fetch(`${API_URL}/genres`);
-    if (!response.ok) throw new Error('Failed to fetch genres');
-    const data = await response.json();
-    return data.data?.genres || data.data || [];
-  },
-
-  // Home
-  getHome: async () => {
-    const response = await fetch(`${API_URL}/home`);
-    if (!response.ok) throw new Error('Failed to fetch home');
     return response.json();
   },
 };
