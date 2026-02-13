@@ -8,7 +8,8 @@ export const api = {
     const response = await fetch(`${API_URL}/movies`);
     if (!response.ok) throw new Error('Failed to fetch movies');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : data.data ? [data.data] : [];
+    // Estructura: { data: { movies: [...], pagination: {...} } }
+    return data.data?.movies || [];
   },
 
   getMovieById: async (id: string) => {
@@ -22,14 +23,14 @@ export const api = {
     const response = await fetch(`${API_URL}/movies?trending=true&limit=${limit}`);
     if (!response.ok) throw new Error('Failed to fetch trending movies');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : [];
+    return data.data?.movies || [];
   },
 
   getNewReleases: async (limit: number = 10) => {
     const response = await fetch(`${API_URL}/movies?new=true&limit=${limit}`);
     if (!response.ok) throw new Error('Failed to fetch new releases');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : [];
+    return data.data?.movies || [];
   },
 
   // Series
@@ -37,7 +38,7 @@ export const api = {
     const response = await fetch(`${API_URL}/series`);
     if (!response.ok) throw new Error('Failed to fetch series');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : data.data ? [data.data] : [];
+    return data.data?.series || [];
   },
 
   getSeriesById: async (id: string) => {
@@ -75,7 +76,7 @@ export const api = {
     const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to search');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : [];
+    return data.data?.movies || data.data?.series || [];
   },
 
   // Géneros
@@ -83,7 +84,7 @@ export const api = {
     const response = await fetch(`${API_URL}/genres`);
     if (!response.ok) throw new Error('Failed to fetch genres');
     const data = await response.json();
-    return Array.isArray(data.data) ? data.data : [];
+    return data.data?.genres || data.data || [];
   },
 
   // Home
