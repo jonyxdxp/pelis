@@ -15,27 +15,37 @@ export function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API loading
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      const trending = api.getTrendingMovies();
-      const newMovies = api.getNewReleases();
-      const allMovies = api.getMovies();
-      const allSeries = api.getSeries();
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
       
-      // Get top rated from both movies and series
-      const allContent = [...allMovies, ...allSeries];
-      const sortedByRating = allContent.sort((a, b) => b.rating - a.rating).slice(0, 10);
+      // Esperar a que se resuelvan las Promises
+      const trending = await api.getTrendingMovies();
+      const newMovies = await api.getNewReleases();
+      const allMovies = await api.getMovies();
+      const allSeries = await api.getSeries();
       
-      setTrendingMovies(trending);
-      setNewReleases(newMovies);
-      setPopularMovies(allMovies.slice(0, 10));
-      setPopularSeries(allSeries.slice(0, 10));
+      // Ahora sí son arrays, puedes hacer spread
+      const allContent = [...(allMovies || []), ...(allSeries || [])];
+      const sortedByRating = allContent
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        .slice(0, 10);
+      
+      // Asignar datos
+      setTrendingMovies(trending || []);
+      setNewReleases(newMovies || []);
+      setPopularMovies((allMovies || []).slice(0, 10));
+      setPopularSeries((allSeries || []).slice(0, 10));
       setTopRated(sortedByRating);
       setIsLoading(false);
-    }, 500);
-  }, []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setIsLoading(false);
+    }
+  };
+  
+  loadData();
+}, []);
 
   if (isLoading) {
     return (
