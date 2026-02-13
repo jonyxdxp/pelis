@@ -78,7 +78,8 @@ model Series {
   firstAirDate      DateTime
   lastAirDate       DateTime?
   status            String    @default("returning")
-  tmdbId            Int?       @unique  // ← PARA VIDLINK
+  imdbId            String?   @unique  // ← AGREGAR ESTO
+  tmdbId            Int?      @unique
   viewsCount        Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
